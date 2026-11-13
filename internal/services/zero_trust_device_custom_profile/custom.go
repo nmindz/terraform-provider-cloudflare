@@ -6,6 +6,7 @@ import (
 	"github.com/cloudflare/terraform-provider-cloudflare/internal/customfield"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -77,11 +78,48 @@ func (r *ZeroTrustDeviceCustomProfileResource) ModifyPlan(ctx context.Context, r
 	resp.Diagnostics.Append(diags...)
 	plan.Include, diags = normalizeSplitTunnelList(ctx, plan.Include, state.Include)
 	resp.Diagnostics.Append(diags...)
+	var configPort types.Float64
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("service_mode_v2").AtName("port"), &configPort)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if !configPort.IsUnknown() {
+		plan.ServiceModeV2, diags = preserveServiceModeV2Port(ctx, plan.ServiceModeV2, state.ServiceModeV2)
+		resp.Diagnostics.Append(diags...)
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
+}
+
+// preserveServiceModeV2Port keeps the prior port while the mode is unchanged; the
+// object-level UseStateForUnknown cannot reach it once service_mode_v2 is configured.
+func preserveServiceModeV2Port(
+	ctx context.Context,
+	planObj customfield.NestedObject[ZeroTrustDeviceCustomProfileServiceModeV2Model],
+	stateObj customfield.NestedObject[ZeroTrustDeviceCustomProfileServiceModeV2Model],
+) (customfield.NestedObject[ZeroTrustDeviceCustomProfileServiceModeV2Model], diag.Diagnostics) {
+	if planObj.IsNull() || planObj.IsUnknown() || stateObj.IsNull() || stateObj.IsUnknown() {
+		return planObj, nil
+	}
+	p, diags := planObj.Value(ctx)
+	if diags.HasError() || p == nil || !p.Port.IsUnknown() {
+		return planObj, diags
+	}
+	s, d := stateObj.Value(ctx)
+	diags.Append(d...)
+	if diags.HasError() || s == nil || p.Mode.IsUnknown() || !p.Mode.Equal(s.Mode) {
+		return planObj, diags
+	}
+	p.Port = s.Port
+	result, d := customfield.NewObject(ctx, p)
+	diags.Append(d...)
+	if d.HasError() {
+		return planObj, diags
+	}
+	return result, diags
 }
 
 // splitTunnelEntry is a constraint interface for exclude/include entry models.

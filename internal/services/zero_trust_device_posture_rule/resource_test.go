@@ -789,3 +789,41 @@ func TestAccUpgradeZeroTrustDevicePostureRule_FromPublishedV5(t *testing.T) {
 		},
 	})
 }
+
+// An omitted or empty description is stored as "" and re-plans as a no-op.
+func TestAccCloudflareDevicePostureRule_DescriptionUnsetOrEmpty(t *testing.T) {
+	if os.Getenv("CLOUDFLARE_API_TOKEN") != "" {
+		t.Setenv("CLOUDFLARE_API_TOKEN", "")
+	}
+
+	for name, file := range map[string]string{
+		"omitted": "devicepostureruleconfignodescription.tf",
+		"empty":   "devicepostureruleconfigemptydescription.tf",
+	} {
+		t.Run(name, func(t *testing.T) {
+			rnd := utils.GenerateRandomResourceName()
+			resourceName := fmt.Sprintf("cloudflare_zero_trust_device_posture_rule.%s", rnd)
+			config := acctest.LoadTestCase(file, rnd, accountID)
+
+			resource.Test(t, resource.TestCase{
+				PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+				ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+				CheckDestroy:             testAccCheckCloudflareDevicePostureRuleDestroy,
+				Steps: []resource.TestStep{
+					{
+						Config: config,
+						ConfigStateChecks: []statecheck.StateCheck{
+							statecheck.ExpectKnownValue(resourceName, tfjsonpath.New("description"), knownvalue.StringExact("")),
+						},
+					},
+					{
+						Config: config,
+						ConfigPlanChecks: resource.ConfigPlanChecks{
+							PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+						},
+					},
+				},
+			})
+		})
+	}
+}

@@ -93,6 +93,7 @@ func (r *ZeroTrustDevicePostureRuleResource) Create(ctx context.Context, req res
 	}
 	data = &env.Result
 
+	normalizeDescription(data)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -142,6 +143,7 @@ func (r *ZeroTrustDevicePostureRuleResource) Update(ctx context.Context, req res
 	}
 	data = &env.Result
 
+	normalizeDescription(data)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -185,6 +187,7 @@ func (r *ZeroTrustDevicePostureRuleResource) Read(ctx context.Context, req resou
 	// Normalize API response to match configuration expectations
 	r.normalizeReadData(ctx, data, req.State)
 
+	normalizeDescription(data)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -258,12 +261,21 @@ func (r *ZeroTrustDevicePostureRuleResource) ImportState(ctx context.Context, re
 	// For import, we want to clean up any API-added defaults to match typical configs
 	r.normalizeImportData(data)
 
+	normalizeDescription(data)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *ZeroTrustDevicePostureRuleResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	// ModifyPlan is disabled since we can't modify non-computed attributes
 	// We'll handle the differences in the Read method instead
+}
+
+// normalizeDescription stores a null description as "": the API returns "" for
+// some rule types and omits the field for others.
+func normalizeDescription(data *ZeroTrustDevicePostureRuleModel) {
+	if data != nil && data.Description.IsNull() {
+		data.Description = types.StringValue("")
+	}
 }
 
 func (r *ZeroTrustDevicePostureRuleResource) normalizeReadData(ctx context.Context, data *ZeroTrustDevicePostureRuleModel, state tfsdk.State) {

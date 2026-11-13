@@ -144,27 +144,7 @@ func pruneEmptyIncludeSelectors(ctx context.Context, set *customfield.NestedObje
 
 	filtered := make([]ZeroTrustAccessPolicyIncludeModel, 0, len(conditions))
 	for _, c := range conditions {
-		if c.Email != nil && isNullUnknownOrEmptyString(c.Email.Email) {
-			c.Email = nil
-		}
-		if c.EmailDomain != nil && isNullUnknownOrEmptyString(c.EmailDomain.Domain) {
-			c.EmailDomain = nil
-		}
-		if c.IP != nil && isNullUnknownOrEmptyString(c.IP.IP) {
-			c.IP = nil
-		}
-		if c.Geo != nil && isNullUnknownOrEmptyString(c.Geo.CountryCode) {
-			c.Geo = nil
-		}
-		if c.DevicePosture != nil && isNullUnknownOrEmptyString(c.DevicePosture.IntegrationUID) {
-			c.DevicePosture = nil
-		}
-		if c.OIDC != nil &&
-			isNullUnknownOrEmptyString(c.OIDC.ClaimName) &&
-			isNullUnknownOrEmptyString(c.OIDC.ClaimValue) &&
-			isNullUnknownOrEmptyString(c.OIDC.IdentityProviderID) {
-			c.OIDC = nil
-		}
+		nullEmptyIncludeConditionSelectors(&c)
 
 		if reflect.DeepEqual(c, ZeroTrustAccessPolicyIncludeModel{}) {
 			continue
@@ -195,27 +175,7 @@ func pruneEmptyExcludeSelectors(ctx context.Context, set *customfield.NestedObje
 
 	filtered := make([]ZeroTrustAccessPolicyExcludeModel, 0, len(conditions))
 	for _, c := range conditions {
-		if c.Email != nil && isNullUnknownOrEmptyString(c.Email.Email) {
-			c.Email = nil
-		}
-		if c.EmailDomain != nil && isNullUnknownOrEmptyString(c.EmailDomain.Domain) {
-			c.EmailDomain = nil
-		}
-		if c.IP != nil && isNullUnknownOrEmptyString(c.IP.IP) {
-			c.IP = nil
-		}
-		if c.Geo != nil && isNullUnknownOrEmptyString(c.Geo.CountryCode) {
-			c.Geo = nil
-		}
-		if c.DevicePosture != nil && isNullUnknownOrEmptyString(c.DevicePosture.IntegrationUID) {
-			c.DevicePosture = nil
-		}
-		if c.OIDC != nil &&
-			isNullUnknownOrEmptyString(c.OIDC.ClaimName) &&
-			isNullUnknownOrEmptyString(c.OIDC.ClaimValue) &&
-			isNullUnknownOrEmptyString(c.OIDC.IdentityProviderID) {
-			c.OIDC = nil
-		}
+		nullEmptyExcludeConditionSelectors(&c)
 
 		if reflect.DeepEqual(c, ZeroTrustAccessPolicyExcludeModel{}) {
 			continue
@@ -246,27 +206,7 @@ func pruneEmptyRequireSelectors(ctx context.Context, set *customfield.NestedObje
 
 	filtered := make([]ZeroTrustAccessPolicyRequireModel, 0, len(conditions))
 	for _, c := range conditions {
-		if c.Email != nil && isNullUnknownOrEmptyString(c.Email.Email) {
-			c.Email = nil
-		}
-		if c.EmailDomain != nil && isNullUnknownOrEmptyString(c.EmailDomain.Domain) {
-			c.EmailDomain = nil
-		}
-		if c.IP != nil && isNullUnknownOrEmptyString(c.IP.IP) {
-			c.IP = nil
-		}
-		if c.Geo != nil && isNullUnknownOrEmptyString(c.Geo.CountryCode) {
-			c.Geo = nil
-		}
-		if c.DevicePosture != nil && isNullUnknownOrEmptyString(c.DevicePosture.IntegrationUID) {
-			c.DevicePosture = nil
-		}
-		if c.OIDC != nil &&
-			isNullUnknownOrEmptyString(c.OIDC.ClaimName) &&
-			isNullUnknownOrEmptyString(c.OIDC.ClaimValue) &&
-			isNullUnknownOrEmptyString(c.OIDC.IdentityProviderID) {
-			c.OIDC = nil
-		}
+		nullEmptyRequireConditionSelectors(&c)
 
 		if reflect.DeepEqual(c, ZeroTrustAccessPolicyRequireModel{}) {
 			continue
@@ -290,9 +230,239 @@ func isNullUnknownOrEmptyString(v basetypes.StringValue) bool {
 	return strings.TrimSpace(v.ValueString()) == ""
 }
 
+// A real selector always has a populated content field, so an object selector
+// with all content empty is a decode artifact stamped from a sibling rule.
+// Content-less selectors (everyone, certificate, any_valid_service_token,
+// cloudflare_account_member) are legitimately empty and left untouched.
+func nullEmptyIncludeConditionSelectors(c *ZeroTrustAccessPolicyIncludeModel) {
+	if c.Group != nil && isNullUnknownOrEmptyString(c.Group.ID) {
+		c.Group = nil
+	}
+	if c.AuthContext != nil && allNullUnknownOrEmpty(c.AuthContext.ID, c.AuthContext.AcID, c.AuthContext.IdentityProviderID) {
+		c.AuthContext = nil
+	}
+	if c.AuthMethod != nil && isNullUnknownOrEmptyString(c.AuthMethod.AuthMethod) {
+		c.AuthMethod = nil
+	}
+	if c.AzureAD != nil && allNullUnknownOrEmpty(c.AzureAD.ID, c.AzureAD.IdentityProviderID) {
+		c.AzureAD = nil
+	}
+	if c.CommonName != nil && isNullUnknownOrEmptyString(c.CommonName.CommonName) {
+		c.CommonName = nil
+	}
+	if c.Geo != nil && isNullUnknownOrEmptyString(c.Geo.CountryCode) {
+		c.Geo = nil
+	}
+	if c.DevicePosture != nil && isNullUnknownOrEmptyString(c.DevicePosture.IntegrationUID) {
+		c.DevicePosture = nil
+	}
+	if c.EmailDomain != nil && isNullUnknownOrEmptyString(c.EmailDomain.Domain) {
+		c.EmailDomain = nil
+	}
+	if c.EmailList != nil && isNullUnknownOrEmptyString(c.EmailList.ID) {
+		c.EmailList = nil
+	}
+	if c.Email != nil && isNullUnknownOrEmptyString(c.Email.Email) {
+		c.Email = nil
+	}
+	if c.ExternalEvaluation != nil && allNullUnknownOrEmpty(c.ExternalEvaluation.EvaluateURL, c.ExternalEvaluation.KeysURL) {
+		c.ExternalEvaluation = nil
+	}
+	if c.GitHubOrganization != nil && allNullUnknownOrEmpty(c.GitHubOrganization.IdentityProviderID, c.GitHubOrganization.Name, c.GitHubOrganization.Team) {
+		c.GitHubOrganization = nil
+	}
+	if c.GSuite != nil && allNullUnknownOrEmpty(c.GSuite.Email, c.GSuite.IdentityProviderID) {
+		c.GSuite = nil
+	}
+	if c.LoginMethod != nil && isNullUnknownOrEmptyString(c.LoginMethod.ID) {
+		c.LoginMethod = nil
+	}
+	if c.IPList != nil && isNullUnknownOrEmptyString(c.IPList.ID) {
+		c.IPList = nil
+	}
+	if c.IP != nil && isNullUnknownOrEmptyString(c.IP.IP) {
+		c.IP = nil
+	}
+	if c.Okta != nil && allNullUnknownOrEmpty(c.Okta.IdentityProviderID, c.Okta.Name) {
+		c.Okta = nil
+	}
+	if c.SAML != nil && allNullUnknownOrEmpty(c.SAML.AttributeName, c.SAML.AttributeValue, c.SAML.IdentityProviderID) {
+		c.SAML = nil
+	}
+	if c.OIDC != nil && allNullUnknownOrEmpty(c.OIDC.ClaimName, c.OIDC.ClaimValue, c.OIDC.IdentityProviderID) {
+		c.OIDC = nil
+	}
+	if c.ServiceToken != nil && isNullUnknownOrEmptyString(c.ServiceToken.TokenID) {
+		c.ServiceToken = nil
+	}
+	if c.ServiceTokenTag != nil && allNullUnknownOrEmpty(c.ServiceTokenTag.Key, c.ServiceTokenTag.Value) {
+		c.ServiceTokenTag = nil
+	}
+	if c.LinkedAppToken != nil && isNullUnknownOrEmptyString(c.LinkedAppToken.AppUID) {
+		c.LinkedAppToken = nil
+	}
+	if c.UserRiskScore != nil && (c.UserRiskScore.UserRiskScore == nil || len(*c.UserRiskScore.UserRiskScore) == 0) {
+		c.UserRiskScore = nil
+	}
+}
+
+func nullEmptyExcludeConditionSelectors(c *ZeroTrustAccessPolicyExcludeModel) {
+	if c.Group != nil && isNullUnknownOrEmptyString(c.Group.ID) {
+		c.Group = nil
+	}
+	if c.AuthContext != nil && allNullUnknownOrEmpty(c.AuthContext.ID, c.AuthContext.AcID, c.AuthContext.IdentityProviderID) {
+		c.AuthContext = nil
+	}
+	if c.AuthMethod != nil && isNullUnknownOrEmptyString(c.AuthMethod.AuthMethod) {
+		c.AuthMethod = nil
+	}
+	if c.AzureAD != nil && allNullUnknownOrEmpty(c.AzureAD.ID, c.AzureAD.IdentityProviderID) {
+		c.AzureAD = nil
+	}
+	if c.CommonName != nil && isNullUnknownOrEmptyString(c.CommonName.CommonName) {
+		c.CommonName = nil
+	}
+	if c.Geo != nil && isNullUnknownOrEmptyString(c.Geo.CountryCode) {
+		c.Geo = nil
+	}
+	if c.DevicePosture != nil && isNullUnknownOrEmptyString(c.DevicePosture.IntegrationUID) {
+		c.DevicePosture = nil
+	}
+	if c.EmailDomain != nil && isNullUnknownOrEmptyString(c.EmailDomain.Domain) {
+		c.EmailDomain = nil
+	}
+	if c.EmailList != nil && isNullUnknownOrEmptyString(c.EmailList.ID) {
+		c.EmailList = nil
+	}
+	if c.Email != nil && isNullUnknownOrEmptyString(c.Email.Email) {
+		c.Email = nil
+	}
+	if c.ExternalEvaluation != nil && allNullUnknownOrEmpty(c.ExternalEvaluation.EvaluateURL, c.ExternalEvaluation.KeysURL) {
+		c.ExternalEvaluation = nil
+	}
+	if c.GitHubOrganization != nil && allNullUnknownOrEmpty(c.GitHubOrganization.IdentityProviderID, c.GitHubOrganization.Name, c.GitHubOrganization.Team) {
+		c.GitHubOrganization = nil
+	}
+	if c.GSuite != nil && allNullUnknownOrEmpty(c.GSuite.Email, c.GSuite.IdentityProviderID) {
+		c.GSuite = nil
+	}
+	if c.LoginMethod != nil && isNullUnknownOrEmptyString(c.LoginMethod.ID) {
+		c.LoginMethod = nil
+	}
+	if c.IPList != nil && isNullUnknownOrEmptyString(c.IPList.ID) {
+		c.IPList = nil
+	}
+	if c.IP != nil && isNullUnknownOrEmptyString(c.IP.IP) {
+		c.IP = nil
+	}
+	if c.Okta != nil && allNullUnknownOrEmpty(c.Okta.IdentityProviderID, c.Okta.Name) {
+		c.Okta = nil
+	}
+	if c.SAML != nil && allNullUnknownOrEmpty(c.SAML.AttributeName, c.SAML.AttributeValue, c.SAML.IdentityProviderID) {
+		c.SAML = nil
+	}
+	if c.OIDC != nil && allNullUnknownOrEmpty(c.OIDC.ClaimName, c.OIDC.ClaimValue, c.OIDC.IdentityProviderID) {
+		c.OIDC = nil
+	}
+	if c.ServiceToken != nil && isNullUnknownOrEmptyString(c.ServiceToken.TokenID) {
+		c.ServiceToken = nil
+	}
+	if c.ServiceTokenTag != nil && allNullUnknownOrEmpty(c.ServiceTokenTag.Key, c.ServiceTokenTag.Value) {
+		c.ServiceTokenTag = nil
+	}
+	if c.LinkedAppToken != nil && isNullUnknownOrEmptyString(c.LinkedAppToken.AppUID) {
+		c.LinkedAppToken = nil
+	}
+	if c.UserRiskScore != nil && (c.UserRiskScore.UserRiskScore == nil || len(*c.UserRiskScore.UserRiskScore) == 0) {
+		c.UserRiskScore = nil
+	}
+}
+
+func nullEmptyRequireConditionSelectors(c *ZeroTrustAccessPolicyRequireModel) {
+	if c.Group != nil && isNullUnknownOrEmptyString(c.Group.ID) {
+		c.Group = nil
+	}
+	if c.AuthContext != nil && allNullUnknownOrEmpty(c.AuthContext.ID, c.AuthContext.AcID, c.AuthContext.IdentityProviderID) {
+		c.AuthContext = nil
+	}
+	if c.AuthMethod != nil && isNullUnknownOrEmptyString(c.AuthMethod.AuthMethod) {
+		c.AuthMethod = nil
+	}
+	if c.AzureAD != nil && allNullUnknownOrEmpty(c.AzureAD.ID, c.AzureAD.IdentityProviderID) {
+		c.AzureAD = nil
+	}
+	if c.CommonName != nil && isNullUnknownOrEmptyString(c.CommonName.CommonName) {
+		c.CommonName = nil
+	}
+	if c.Geo != nil && isNullUnknownOrEmptyString(c.Geo.CountryCode) {
+		c.Geo = nil
+	}
+	if c.DevicePosture != nil && isNullUnknownOrEmptyString(c.DevicePosture.IntegrationUID) {
+		c.DevicePosture = nil
+	}
+	if c.EmailDomain != nil && isNullUnknownOrEmptyString(c.EmailDomain.Domain) {
+		c.EmailDomain = nil
+	}
+	if c.EmailList != nil && isNullUnknownOrEmptyString(c.EmailList.ID) {
+		c.EmailList = nil
+	}
+	if c.Email != nil && isNullUnknownOrEmptyString(c.Email.Email) {
+		c.Email = nil
+	}
+	if c.ExternalEvaluation != nil && allNullUnknownOrEmpty(c.ExternalEvaluation.EvaluateURL, c.ExternalEvaluation.KeysURL) {
+		c.ExternalEvaluation = nil
+	}
+	if c.GitHubOrganization != nil && allNullUnknownOrEmpty(c.GitHubOrganization.IdentityProviderID, c.GitHubOrganization.Name, c.GitHubOrganization.Team) {
+		c.GitHubOrganization = nil
+	}
+	if c.GSuite != nil && allNullUnknownOrEmpty(c.GSuite.Email, c.GSuite.IdentityProviderID) {
+		c.GSuite = nil
+	}
+	if c.LoginMethod != nil && isNullUnknownOrEmptyString(c.LoginMethod.ID) {
+		c.LoginMethod = nil
+	}
+	if c.IPList != nil && isNullUnknownOrEmptyString(c.IPList.ID) {
+		c.IPList = nil
+	}
+	if c.IP != nil && isNullUnknownOrEmptyString(c.IP.IP) {
+		c.IP = nil
+	}
+	if c.Okta != nil && allNullUnknownOrEmpty(c.Okta.IdentityProviderID, c.Okta.Name) {
+		c.Okta = nil
+	}
+	if c.SAML != nil && allNullUnknownOrEmpty(c.SAML.AttributeName, c.SAML.AttributeValue, c.SAML.IdentityProviderID) {
+		c.SAML = nil
+	}
+	if c.OIDC != nil && allNullUnknownOrEmpty(c.OIDC.ClaimName, c.OIDC.ClaimValue, c.OIDC.IdentityProviderID) {
+		c.OIDC = nil
+	}
+	if c.ServiceToken != nil && isNullUnknownOrEmptyString(c.ServiceToken.TokenID) {
+		c.ServiceToken = nil
+	}
+	if c.ServiceTokenTag != nil && allNullUnknownOrEmpty(c.ServiceTokenTag.Key, c.ServiceTokenTag.Value) {
+		c.ServiceTokenTag = nil
+	}
+	if c.LinkedAppToken != nil && isNullUnknownOrEmptyString(c.LinkedAppToken.AppUID) {
+		c.LinkedAppToken = nil
+	}
+	if c.UserRiskScore != nil && (c.UserRiskScore.UserRiskScore == nil || len(*c.UserRiskScore.UserRiskScore) == 0) {
+		c.UserRiskScore = nil
+	}
+}
+
+func allNullUnknownOrEmpty(values ...basetypes.StringValue) bool {
+	for _, v := range values {
+		if !isNullUnknownOrEmptyString(v) {
+			return false
+		}
+	}
+	return true
+}
+
 // Specialized normalization for import operations where API omits false boolean values
 func normalizeImportZeroTrustAccessPolicyAPIData(ctx context.Context, data *ZeroTrustAccessPolicyModel) diag.Diagnostics {
 	diags := make(diag.Diagnostics, 0)
+	diags.Append(pruneEmptyConditionSelectors(ctx, data)...)
 
 	if !data.Include.IsNull() && len(data.Include.Elements()) == 0 {
 		data.Include = customfield.NullObjectSet[ZeroTrustAccessPolicyIncludeModel](ctx)

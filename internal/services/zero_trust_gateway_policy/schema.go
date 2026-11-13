@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -117,10 +119,11 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Default:     stringdefault.StaticString(""),
 			},
 			"expiration": schema.SingleNestedAttribute{
-				Description: "Defines the expiration time stamp and default duration of a DNS policy. Takes precedence over the policy's `schedule` configuration, if any. This  does not apply to HTTP or network policies. Settable only for `dns` rules.",
-				Computed:    true,
-				Optional:    true,
-				CustomType:  customfield.NewNestedObjectType[ZeroTrustGatewayPolicyExpirationModel](ctx),
+				Description:   "Defines the expiration time stamp and default duration of a DNS policy. Takes precedence over the policy's `schedule` configuration, if any. This  does not apply to HTTP or network policies. Settable only for `dns` rules.",
+				Computed:      true,
+				Optional:      true,
+				CustomType:    customfield.NewNestedObjectType[ZeroTrustGatewayPolicyExpirationModel](ctx),
+				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 				Attributes: map[string]schema.Attribute{
 					"expires_at": schema.StringAttribute{
 						Description: "Show the timestamp when the policy expires and stops applying.  The value must follow RFC 3339 and include a UTC offset.  The system accepts non-zero offsets but converts them to the equivalent UTC+00:00  value and returns timestamps with a trailing Z. Expiration policies ignore client  timezones and expire globally at the specified expires_at time.",
@@ -141,10 +144,11 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"rule_settings": schema.SingleNestedAttribute{
-				Description: "Defines settings for this rule. Settings apply only to specific rule types and must use compatible selectors. If Terraform detects drift, confirm the setting supports your rule type and check whether the API modifies the value. Use API-returned values in your configuration to prevent drift.",
-				Computed:    true,
-				Optional:    true,
-				CustomType:  customfield.NewNestedObjectType[ZeroTrustGatewayPolicyRuleSettingsModel](ctx),
+				Description:   "Defines settings for this rule. Settings apply only to specific rule types and must use compatible selectors. If Terraform detects drift, confirm the setting supports your rule type and check whether the API modifies the value. Use API-returned values in your configuration to prevent drift.",
+				Computed:      true,
+				Optional:      true,
+				CustomType:    customfield.NewNestedObjectType[ZeroTrustGatewayPolicyRuleSettingsModel](ctx),
+				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 				Attributes: map[string]schema.Attribute{
 					"add_headers": schema.MapAttribute{
 						Description: "Add custom headers to allowed requests as key-value pairs. Use header names as keys that map to arrays of header values. Settable only for `http` rules with the action set to `allow`.",
@@ -155,6 +159,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 					},
 					"allow_child_bypass": schema.BoolAttribute{
 						Description: "Set to enable MSP children to bypass this rule. Only parent MSP accounts can set this. this rule. Settable for all types of rules.",
+						Computed:    true,
 						Optional:    true,
 					},
 					"biso_admin_controls": schema.SingleNestedAttribute{
@@ -270,10 +275,12 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 					},
 					"block_page_enabled": schema.BoolAttribute{
 						Description: "Enable the custom block page. Settable only for `dns` rules with action `block`.",
+						Computed:    true,
 						Optional:    true,
 					},
 					"block_reason": schema.StringAttribute{
 						Description: "Explain why the rule blocks the request. The custom block page shows this text (if enabled). Settable only for `dns`, `l4`, and `http` rules when the action set to `block`.",
+						Computed:    true,
 						Optional:    true,
 					},
 					"bypass_parent_rule": schema.BoolAttribute{
@@ -396,14 +403,17 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 					},
 					"insecure_disable_dnssec_validation": schema.BoolAttribute{
 						Description: "Specify whether to disable DNSSEC validation (for Allow actions) [INSECURE]. Settable only for `dns` rules.",
+						Computed:    true,
 						Optional:    true,
 					},
 					"ip_categories": schema.BoolAttribute{
 						Description: "Enable IPs in DNS resolver category blocks. The system blocks only domain name categories unless you enable this setting. Settable only for `dns` and `dns_resolver` rules.",
+						Computed:    true,
 						Optional:    true,
 					},
 					"ip_indicator_feeds": schema.BoolAttribute{
 						Description: "Indicates whether to include IPs in DNS resolver indicator feed blocks. Default, indicator feeds block only domain names. Settable only for `dns` and `dns_resolver` rules.",
+						Computed:    true,
 						Optional:    true,
 					},
 					"l4override": schema.SingleNestedAttribute{
@@ -444,10 +454,12 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 					},
 					"override_host": schema.StringAttribute{
 						Description: "Defines a hostname for override, for the matching DNS queries. Settable only for `dns` rules with the action set to `override`.",
+						Computed:    true,
 						Optional:    true,
 					},
 					"override_ips": schema.ListAttribute{
 						Description: "Defines a an IP or set of IPs for overriding matched DNS queries. Settable only for `dns` rules with the action set to `override`.",
+						Computed:    true,
 						Optional:    true,
 						ElementType: types.StringType,
 					},
@@ -528,6 +540,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 					},
 					"resolve_dns_through_cloudflare": schema.BoolAttribute{
 						Description: "Enable to send queries that match the policy to Cloudflare's default 1.1.1.1 DNS resolver. Cannot set when 'dns_resolvers' specified or 'resolve_dns_internally' is set. Only valid when a rule's action set to 'resolve'. Settable only for `dns_resolver` rules.",
+						Computed:    true,
 						Optional:    true,
 					},
 					"set_headers": schema.MapAttribute{
@@ -557,10 +570,11 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"schedule": schema.SingleNestedAttribute{
-				Description: "Defines the schedule for activating DNS policies. Settable only for `dns` and `dns_resolver` rules.",
-				Computed:    true,
-				Optional:    true,
-				CustomType:  customfield.NewNestedObjectType[ZeroTrustGatewayPolicyScheduleModel](ctx),
+				Description:   "Defines the schedule for activating DNS policies. Settable only for `dns` and `dns_resolver` rules.",
+				Computed:      true,
+				Optional:      true,
+				CustomType:    customfield.NewNestedObjectType[ZeroTrustGatewayPolicyScheduleModel](ctx),
+				PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 				Attributes: map[string]schema.Attribute{
 					"fri": schema.StringAttribute{
 						Description: "Specify the time intervals when the rule is active on Fridays, in the increasing order from 00:00-24:00.  If this parameter omitted, the rule is deactivated on Fridays. API returns a formatted version of this string, which may cause Terraform drift if a unformatted value is used.",
@@ -597,26 +611,33 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				},
 			},
 			"created_at": schema.StringAttribute{
-				Computed:   true,
-				CustomType: timetypes.RFC3339Type{},
+				Computed:      true,
+				CustomType:    timetypes.RFC3339Type{},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"deleted_at": schema.StringAttribute{
-				Description: "Indicate the date of deletion, if any.",
-				Computed:    true,
-				CustomType:  timetypes.RFC3339Type{},
+				Description:   "Indicate the date of deletion, if any.",
+				Computed:      true,
+				CustomType:    timetypes.RFC3339Type{},
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"read_only": schema.BoolAttribute{
-				Description: "Indicate that this rule is shared via the Orgs API and read only.",
-				Computed:    true,
+				Description:   "Indicate that this rule is shared via the Orgs API and read only.",
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"sharable": schema.BoolAttribute{
-				Description: "Indicate that this rule is sharable via the Orgs API.",
-				Computed:    true,
+				Description:   "Indicate that this rule is sharable via the Orgs API.",
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 			"source_account": schema.StringAttribute{
-				Description: "Provide the account tag of the account that created the rule.",
-				Computed:    true,
+				Description:   "Provide the account tag of the account that created the rule.",
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
+			// updated_at, version and warning_status change on every real update; pinning them
+			// fails apply with "Provider produced inconsistent result".
 			"updated_at": schema.StringAttribute{
 				Computed:   true,
 				CustomType: timetypes.RFC3339Type{},

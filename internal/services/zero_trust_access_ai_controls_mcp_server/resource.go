@@ -85,11 +85,13 @@ func (r *ZeroTrustAccessAIControlsMcpServerResource) Create(ctx context.Context,
 		return
 	}
 	bytes, _ := io.ReadAll(res.Body)
+	bytes = normalizeServerRead(bytes)
 	err = apijson.UnmarshalComputed(bytes, &env)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to deserialize http request", err.Error())
 		return
 	}
+	preserveEmptyOverrides(&env.Result, data)
 	data = &env.Result
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -134,11 +136,13 @@ func (r *ZeroTrustAccessAIControlsMcpServerResource) Update(ctx context.Context,
 		return
 	}
 	bytes, _ := io.ReadAll(res.Body)
+	bytes = normalizeServerRead(bytes)
 	err = apijson.UnmarshalComputed(bytes, &env)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to deserialize http request", err.Error())
 		return
 	}
+	preserveEmptyOverrides(&env.Result, data)
 	data = &env.Result
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -174,11 +178,13 @@ func (r *ZeroTrustAccessAIControlsMcpServerResource) Read(ctx context.Context, r
 		return
 	}
 	bytes, _ := io.ReadAll(res.Body)
+	bytes = normalizeServerRead(bytes)
 	err = apijson.Unmarshal(bytes, &env)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to deserialize http request", err.Error())
 		return
 	}
+	preserveEmptyOverrides(&env.Result, data)
 	data = &env.Result
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -244,6 +250,7 @@ func (r *ZeroTrustAccessAIControlsMcpServerResource) ImportState(ctx context.Con
 		return
 	}
 	bytes, _ := io.ReadAll(res.Body)
+	bytes = normalizeServerRead(bytes)
 	err = apijson.Unmarshal(bytes, &env)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to deserialize http request", err.Error())

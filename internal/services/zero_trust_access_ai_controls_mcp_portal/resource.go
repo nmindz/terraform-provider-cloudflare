@@ -85,11 +85,18 @@ func (r *ZeroTrustAccessAIControlsMcpPortalResource) Create(ctx context.Context,
 		return
 	}
 	bytes, _ := io.ReadAll(res.Body)
+	bytes = normalizePortalRead(bytes)
 	err = apijson.UnmarshalComputed(bytes, &env)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to deserialize http request", err.Error())
 		return
 	}
+	servers, diags := preserveEmptyServerOverrides(ctx, env.Result.Servers, data.Servers)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	env.Result.Servers = servers
 	data = &env.Result
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -134,11 +141,18 @@ func (r *ZeroTrustAccessAIControlsMcpPortalResource) Update(ctx context.Context,
 		return
 	}
 	bytes, _ := io.ReadAll(res.Body)
+	bytes = normalizePortalRead(bytes)
 	err = apijson.UnmarshalComputed(bytes, &env)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to deserialize http request", err.Error())
 		return
 	}
+	servers, diags := preserveEmptyServerOverrides(ctx, env.Result.Servers, data.Servers)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	env.Result.Servers = servers
 	data = &env.Result
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -174,11 +188,18 @@ func (r *ZeroTrustAccessAIControlsMcpPortalResource) Read(ctx context.Context, r
 		return
 	}
 	bytes, _ := io.ReadAll(res.Body)
+	bytes = normalizePortalRead(bytes)
 	err = apijson.Unmarshal(bytes, &env)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to deserialize http request", err.Error())
 		return
 	}
+	servers, diags := preserveEmptyServerOverrides(ctx, env.Result.Servers, data.Servers)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	env.Result.Servers = servers
 	data = &env.Result
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -244,6 +265,7 @@ func (r *ZeroTrustAccessAIControlsMcpPortalResource) ImportState(ctx context.Con
 		return
 	}
 	bytes, _ := io.ReadAll(res.Body)
+	bytes = normalizePortalRead(bytes)
 	err = apijson.Unmarshal(bytes, &env)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to deserialize http request", err.Error())

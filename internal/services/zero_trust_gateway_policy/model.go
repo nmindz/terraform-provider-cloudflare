@@ -54,11 +54,11 @@ type ZeroTrustGatewayPolicyExpirationModel struct {
 
 type ZeroTrustGatewayPolicyRuleSettingsModel struct {
 	AddHeaders                      *map[string]*[]types.String                                  `tfsdk:"add_headers" json:"add_headers,optional"`
-	AllowChildBypass                types.Bool                                                   `tfsdk:"allow_child_bypass" json:"allow_child_bypass,optional"`
+	AllowChildBypass                types.Bool                                                   `tfsdk:"allow_child_bypass" json:"allow_child_bypass,computed_optional"`
 	BISOAdminControls               *ZeroTrustGatewayPolicyRuleSettingsBISOAdminControlsModel    `tfsdk:"biso_admin_controls" json:"biso_admin_controls,optional"`
 	BlockPage                       *ZeroTrustGatewayPolicyRuleSettingsBlockPageModel            `tfsdk:"block_page" json:"block_page,optional"`
-	BlockPageEnabled                types.Bool                                                   `tfsdk:"block_page_enabled" json:"block_page_enabled,optional"`
-	BlockReason                     types.String                                                 `tfsdk:"block_reason" json:"block_reason,optional"`
+	BlockPageEnabled                types.Bool                                                   `tfsdk:"block_page_enabled" json:"block_page_enabled,computed_optional"`
+	BlockReason                     types.String                                                 `tfsdk:"block_reason" json:"block_reason,computed_optional"`
 	BypassParentRule                types.Bool                                                   `tfsdk:"bypass_parent_rule" json:"bypass_parent_rule,optional"`
 	CheckSession                    *ZeroTrustGatewayPolicyRuleSettingsCheckSessionModel         `tfsdk:"check_session" json:"check_session,optional"`
 	DeleteHeaders                   *[]types.String                                              `tfsdk:"delete_headers" json:"delete_headers,optional"`
@@ -67,18 +67,18 @@ type ZeroTrustGatewayPolicyRuleSettingsModel struct {
 	ForensicCopy                    *ZeroTrustGatewayPolicyRuleSettingsForensicCopyModel         `tfsdk:"forensic_copy" json:"forensic_copy,optional"`
 	Forward                         *ZeroTrustGatewayPolicyRuleSettingsForwardModel              `tfsdk:"forward" json:"forward,optional"`
 	IgnoreCNAMECategoryMatches      types.Bool                                                   `tfsdk:"ignore_cname_category_matches" json:"ignore_cname_category_matches,computed_optional"`
-	InsecureDisableDNSSECValidation types.Bool                                                   `tfsdk:"insecure_disable_dnssec_validation" json:"insecure_disable_dnssec_validation,optional"`
-	IPCategories                    types.Bool                                                   `tfsdk:"ip_categories" json:"ip_categories,optional"`
-	IPIndicatorFeeds                types.Bool                                                   `tfsdk:"ip_indicator_feeds" json:"ip_indicator_feeds,optional"`
+	InsecureDisableDNSSECValidation types.Bool                                                   `tfsdk:"insecure_disable_dnssec_validation" json:"insecure_disable_dnssec_validation,computed_optional"`
+	IPCategories                    types.Bool                                                   `tfsdk:"ip_categories" json:"ip_categories,computed_optional"`
+	IPIndicatorFeeds                types.Bool                                                   `tfsdk:"ip_indicator_feeds" json:"ip_indicator_feeds,computed_optional"`
 	L4override                      *ZeroTrustGatewayPolicyRuleSettingsL4overrideModel           `tfsdk:"l4override" json:"l4override,optional"`
 	NotificationSettings            *ZeroTrustGatewayPolicyRuleSettingsNotificationSettingsModel `tfsdk:"notification_settings" json:"notification_settings,optional"`
-	OverrideHost                    types.String                                                 `tfsdk:"override_host" json:"override_host,optional"`
-	OverrideIPs                     customfield.List[types.String]                               `tfsdk:"override_ips" json:"override_ips,optional"`
+	OverrideHost                    types.String                                                 `tfsdk:"override_host" json:"override_host,computed_optional"`
+	OverrideIPs                     customfield.List[types.String]                               `tfsdk:"override_ips" json:"override_ips,computed_optional"`
 	PayloadLog                      *ZeroTrustGatewayPolicyRuleSettingsPayloadLogModel           `tfsdk:"payload_log" json:"payload_log,optional"`
 	Quarantine                      *ZeroTrustGatewayPolicyRuleSettingsQuarantineModel           `tfsdk:"quarantine" json:"quarantine,optional"`
 	Redirect                        *ZeroTrustGatewayPolicyRuleSettingsRedirectModel             `tfsdk:"redirect" json:"redirect,optional"`
 	ResolveDNSInternally            *ZeroTrustGatewayPolicyRuleSettingsResolveDNSInternallyModel `tfsdk:"resolve_dns_internally" json:"resolve_dns_internally,optional"`
-	ResolveDNSThroughCloudflare     types.Bool                                                   `tfsdk:"resolve_dns_through_cloudflare" json:"resolve_dns_through_cloudflare,optional"`
+	ResolveDNSThroughCloudflare     types.Bool                                                   `tfsdk:"resolve_dns_through_cloudflare" json:"resolve_dns_through_cloudflare,computed_optional"`
 	SetHeaders                      *map[string]*[]types.String                                  `tfsdk:"set_headers" json:"set_headers,optional"`
 	UntrustedCERT                   *ZeroTrustGatewayPolicyRuleSettingsUntrustedCERTModel        `tfsdk:"untrusted_cert" json:"untrusted_cert,optional"`
 }

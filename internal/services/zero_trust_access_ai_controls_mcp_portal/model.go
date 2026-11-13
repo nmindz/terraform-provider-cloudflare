@@ -20,8 +20,9 @@ type ZeroTrustAccessAIControlsMcpPortalModel struct {
 	Name             types.String                                                                `tfsdk:"name" json:"name,required"`
 	AllowCodeMode    types.Bool                                                                  `tfsdk:"allow_code_mode" json:"allow_code_mode,computed_optional"`
 	CodeMode         types.String                                                                `tfsdk:"code_mode" json:"code_mode,computed_optional"`
-	Description      types.String                                                                `tfsdk:"description" json:"description,optional"`
+	Description      types.String                                                                `tfsdk:"description" json:"description,computed_optional"`
 	SecureWebGateway types.Bool                                                                  `tfsdk:"secure_web_gateway" json:"secure_web_gateway,computed_optional"`
+	Enabled          types.Bool                                                                  `tfsdk:"enabled" json:"enabled,optional,no_refresh"`
 	Servers          customfield.NestedObjectSet[ZeroTrustAccessAIControlsMcpPortalServersModel] `tfsdk:"servers" json:"servers,computed_optional"`
 	CreatedAt        timetypes.RFC3339                                                           `tfsdk:"created_at" json:"created_at,computed" format:"date-time"`
 	CreatedBy        types.String                                                                `tfsdk:"created_by" json:"created_by,computed"`

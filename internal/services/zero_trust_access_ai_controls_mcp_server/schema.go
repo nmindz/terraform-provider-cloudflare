@@ -169,14 +169,14 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Computed:   true,
 				CustomType: timetypes.RFC3339Type{},
 			},
+			// modified_*/status are re-stamped by the server (sync, cascades); no
+			// UseStateForUnknown, or applies fail with "inconsistent result".
 			"modified_at": schema.StringAttribute{
-				Computed:      true,
-				CustomType:    timetypes.RFC3339Type{},
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Computed:   true,
+				CustomType: timetypes.RFC3339Type{},
 			},
 			"modified_by": schema.StringAttribute{
-				Computed:      true,
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Computed: true,
 			},
 			"registered_at": schema.StringAttribute{
 				Description: "Timestamp of the most recent successful admin OAuth registration.",
@@ -184,8 +184,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				CustomType:  timetypes.RFC3339Type{},
 			},
 			"status": schema.StringAttribute{
-				Computed:      true,
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				Computed: true,
 			},
 			"prompts": schema.ListAttribute{
 				Computed:   true,

@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
@@ -67,6 +68,13 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"description": schema.StringAttribute{
 				Description: "Optional description of the MCP portal.",
+				Computed:    true,
+				Optional:    true,
+				// The API stores an unset description as ""; default to match it.
+				Default: stringdefault.StaticString(""),
+			},
+			"enabled": schema.BoolAttribute{
+				Description: "Whether the portal is enabled. Not part of the public API schema; the dashboard sends `true` on create. API-created portals are otherwise disabled, leaving the portal hostname unbound at the edge. Write-only: the API does not return it on read.",
 				Optional:    true,
 			},
 			"servers": schema.SetNestedAttribute{
@@ -155,7 +163,8 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseNonNullStateForUnknown()},
 			},
 			"created_by": schema.StringAttribute{
-				Computed: true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"modified_at": schema.StringAttribute{
 				Computed:   true,
