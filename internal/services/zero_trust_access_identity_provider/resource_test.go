@@ -516,3 +516,48 @@ func TestAccUpgradeZeroTrustAccessIdentityProvider_FromPublishedV5(t *testing.T)
 		},
 	})
 }
+
+func TestAccCloudflareAccessIdentityProvider_SCIMDisabledNoDrift(t *testing.T) {
+	t.Parallel()
+	accountID := os.Getenv("CLOUDFLARE_ACCOUNT_ID")
+	rnd := utils.GenerateRandomResourceName()
+	resourceName := "cloudflare_zero_trust_access_identity_provider." + rnd
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.TestAccPreCheck(t)
+			acctest.TestAccPreCheck_AccountID(t)
+		},
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				// SCIM disabled, identity_update_behavior unconfigured: no injected
+				// default and no unknown scim_base_url.
+				Config: testAccCheckCloudflareAccessIdentityProviderCloudflareSCIMDisabled(accountID, rnd),
+			},
+			{
+				Config: testAccCheckCloudflareAccessIdentityProviderCloudflareSCIMDisabled(accountID, rnd),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			{
+				Config: testAccCheckCloudflareAccessIdentityProviderCloudflareSCIMBehavior(accountID, rnd, "reauth"),
+				Check:  resource.TestCheckResourceAttr(resourceName, "scim_config.identity_update_behavior", "reauth"),
+			},
+			{
+				Config: testAccCheckCloudflareAccessIdentityProviderCloudflareSCIMBehavior(accountID, rnd, "reauth"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+func testAccCheckCloudflareAccessIdentityProviderCloudflareSCIMDisabled(accountID, name string) string {
+	return acctest.LoadTestCase("accessidentityprovidercloudflarescimdisabled.tf", accountID, name)
+}
+
+func testAccCheckCloudflareAccessIdentityProviderCloudflareSCIMBehavior(accountID, name, behavior string) string {
+	return acctest.LoadTestCase("accessidentityprovidercloudflarescimbehavior.tf", accountID, name, behavior)
+}

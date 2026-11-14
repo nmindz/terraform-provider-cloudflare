@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/cloudflare/terraform-provider-cloudflare/internal/customfield"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -35,7 +36,7 @@ type BotManagementAPIModel struct {
 	SBFMStaticResourceProtection *bool                                        `json:"sbfm_static_resource_protection,omitempty"`
 	SBFMVerifiedBots             *string                                      `json:"sbfm_verified_bots,omitempty"`
 	SuppressSessionScore         *bool                                        `json:"suppress_session_score,omitempty"`
-	UsingLatestModel             *bool                                        `json:"using_latest_model,omitempty"`
+	UsingLatestModel             *bool                                        `json:"using_latest_model,omitempty"` // response-only; never sent
 	StaleZoneConfiguration       *BotManagementStaleZoneConfigurationAPIModel `json:"stale_zone_configuration,omitempty"`
 	AIAgents                     *BotManagementAIAgentsAPIModel               `json:"ai_agents,omitempty"`
 }
@@ -88,63 +89,94 @@ type BotManagementModel struct {
 	StaleZoneConfiguration       customfield.NestedObject[BotManagementStaleZoneConfigurationModel] `tfsdk:"stale_zone_configuration" json:"stale_zone_configuration,computed"`
 }
 
-// Helper functions for ToAPIModel conversion
-func setBoolField(field types.Bool, target **bool) {
-	if !field.IsNull() && !field.IsUnknown() {
+// shouldSend reports whether a plan value belongs in the request body: it must
+// be known and either configured or changed from the prior state.
+func shouldSend(plan, config, prior attr.Value, hasPrior bool) bool {
+	if plan.IsNull() || plan.IsUnknown() {
+		return false
+	}
+	if !config.IsNull() {
+		return true
+	}
+	return hasPrior && !plan.Equal(prior)
+}
+
+func setBoolField(field, config, prior types.Bool, hasPrior bool, target **bool) {
+	if shouldSend(field, config, prior, hasPrior) {
 		val := field.ValueBool()
 		*target = &val
 	}
 }
 
-func setStringField(field types.String, target **string) {
-	if !field.IsNull() && !field.IsUnknown() {
+func setStringField(field, config, prior types.String, hasPrior bool, target **string) {
+	if shouldSend(field, config, prior, hasPrior) {
 		val := field.ValueString()
 		*target = &val
 	}
 }
 
-// ToAPIModel converts the Terraform state model to the API model for requests
-func (m BotManagementModel) ToAPIModel() BotManagementAPIModel {
+// ToAPIModel builds the request body from the plan. Only fields that are
+// configured, or changed relative to prior, are sent; prior is nil on create.
+// Computed-only fields (using_latest_model, stale_zone_configuration) are never sent.
+func (m BotManagementModel) ToAPIModel(config, prior *BotManagementModel) BotManagementAPIModel {
 	api := BotManagementAPIModel{}
+	if config == nil {
+		config = &BotManagementModel{}
+	}
+	hasPrior := prior != nil
+	if !hasPrior {
+		prior = &BotManagementModel{}
+	}
 
-	// Convert boolean fields to pointers
-	setBoolField(m.AIBotsMigrationOptOut, &api.AIBotsMigrationOptOut)
-	setBoolField(m.AutoUpdateModel, &api.AutoUpdateModel)
-	setBoolField(m.BmCookieEnabled, &api.BmCookieEnabled)
-	setBoolField(m.EnableJS, &api.EnableJS)
-	setBoolField(m.FightMode, &api.FightMode)
-	setBoolField(m.IsRobotsTXTManaged, &api.IsRobotsTXTManaged)
-	setBoolField(m.JsdAPIResultsEnabled, &api.JsdAPIResultsEnabled)
-	setBoolField(m.OptimizeWordpress, &api.OptimizeWordpress)
-	setBoolField(m.SBFMStaticResourceProtection, &api.SBFMStaticResourceProtection)
-	setBoolField(m.SuppressSessionScore, &api.SuppressSessionScore)
-	setBoolField(m.UsingLatestModel, &api.UsingLatestModel)
+	setBoolField(m.AIBotsMigrationOptOut, config.AIBotsMigrationOptOut, prior.AIBotsMigrationOptOut, hasPrior, &api.AIBotsMigrationOptOut)
+	setBoolField(m.AutoUpdateModel, config.AutoUpdateModel, prior.AutoUpdateModel, hasPrior, &api.AutoUpdateModel)
+	setBoolField(m.BmCookieEnabled, config.BmCookieEnabled, prior.BmCookieEnabled, hasPrior, &api.BmCookieEnabled)
+	setBoolField(m.EnableJS, config.EnableJS, prior.EnableJS, hasPrior, &api.EnableJS)
+	setBoolField(m.FightMode, config.FightMode, prior.FightMode, hasPrior, &api.FightMode)
+	setBoolField(m.IsRobotsTXTManaged, config.IsRobotsTXTManaged, prior.IsRobotsTXTManaged, hasPrior, &api.IsRobotsTXTManaged)
+	setBoolField(m.JsdAPIResultsEnabled, config.JsdAPIResultsEnabled, prior.JsdAPIResultsEnabled, hasPrior, &api.JsdAPIResultsEnabled)
+	setBoolField(m.OptimizeWordpress, config.OptimizeWordpress, prior.OptimizeWordpress, hasPrior, &api.OptimizeWordpress)
+	setBoolField(m.SBFMStaticResourceProtection, config.SBFMStaticResourceProtection, prior.SBFMStaticResourceProtection, hasPrior, &api.SBFMStaticResourceProtection)
+	setBoolField(m.SuppressSessionScore, config.SuppressSessionScore, prior.SuppressSessionScore, hasPrior, &api.SuppressSessionScore)
 
-	// Convert string fields to pointers
-	setStringField(m.AIBotsProtection, &api.AIBotsProtection)
-	setStringField(m.AITraining, &api.AITraining)
-	setStringField(m.AIUser, &api.AIUser)
-	setStringField(m.AISearch, &api.AISearch)
-	setStringField(m.CrawlerProtection, &api.CrawlerProtection)
-	setStringField(m.SBFMDefinitelyAutomated, &api.SBFMDefinitelyAutomated)
-	setStringField(m.SBFMLikelyAutomated, &api.SBFMLikelyAutomated)
-	setStringField(m.SBFMVerifiedBots, &api.SBFMVerifiedBots)
+	setStringField(m.AIBotsProtection, config.AIBotsProtection, prior.AIBotsProtection, hasPrior, &api.AIBotsProtection)
+	setStringField(m.AITraining, config.AITraining, prior.AITraining, hasPrior, &api.AITraining)
+	setStringField(m.AIUser, config.AIUser, prior.AIUser, hasPrior, &api.AIUser)
+	setStringField(m.AISearch, config.AISearch, prior.AISearch, hasPrior, &api.AISearch)
+	setStringField(m.CrawlerProtection, config.CrawlerProtection, prior.CrawlerProtection, hasPrior, &api.CrawlerProtection)
+	setStringField(m.SBFMDefinitelyAutomated, config.SBFMDefinitelyAutomated, prior.SBFMDefinitelyAutomated, hasPrior, &api.SBFMDefinitelyAutomated)
+	setStringField(m.SBFMLikelyAutomated, config.SBFMLikelyAutomated, prior.SBFMLikelyAutomated, hasPrior, &api.SBFMLikelyAutomated)
+	setStringField(m.SBFMVerifiedBots, config.SBFMVerifiedBots, prior.SBFMVerifiedBots, hasPrior, &api.SBFMVerifiedBots)
 
-	// Convert nested ai_agents configuration (send path; mirror of updateAIAgents).
-	// Without this a configured ai_agents block is never marshaled into the request
-	// body, so the API never receives it (APIX-1853).
+	// Nested ai_agents: same rule per sub-field; block sent only if any qualifies.
 	if !m.AIAgents.IsNull() && !m.AIAgents.IsUnknown() {
 		if aiAgents, diags := m.AIAgents.Value(context.TODO()); !diags.HasError() && aiAgents != nil {
-			api.AIAgents = &BotManagementAIAgentsAPIModel{}
-			setStringField(aiAgents.AnthropicAgent, &api.AIAgents.AnthropicAgent)
-			setStringField(aiAgents.GoogleAgent, &api.AIAgents.GoogleAgent)
-			setStringField(aiAgents.Instinct, &api.AIAgents.Instinct)
-			setStringField(aiAgents.Muse, &api.AIAgents.Muse)
-			setStringField(aiAgents.OpenAIAgent, &api.AIAgents.OpenAIAgent)
+			cfg := nestedAIAgents(config.AIAgents)
+			pri := nestedAIAgents(prior.AIAgents)
+			block := &BotManagementAIAgentsAPIModel{}
+			setStringField(aiAgents.AnthropicAgent, cfg.AnthropicAgent, pri.AnthropicAgent, hasPrior, &block.AnthropicAgent)
+			setStringField(aiAgents.GoogleAgent, cfg.GoogleAgent, pri.GoogleAgent, hasPrior, &block.GoogleAgent)
+			setStringField(aiAgents.Instinct, cfg.Instinct, pri.Instinct, hasPrior, &block.Instinct)
+			setStringField(aiAgents.Muse, cfg.Muse, pri.Muse, hasPrior, &block.Muse)
+			setStringField(aiAgents.OpenAIAgent, cfg.OpenAIAgent, pri.OpenAIAgent, hasPrior, &block.OpenAIAgent)
+			if *block != (BotManagementAIAgentsAPIModel{}) {
+				api.AIAgents = block
+			}
 		}
 	}
 
 	return api
+}
+
+// nestedAIAgents returns the ai_agents value, or an all-null model when absent.
+func nestedAIAgents(v customfield.NestedObject[BotManagementAIAgentsModel]) BotManagementAIAgentsModel {
+	if v.IsNull() || v.IsUnknown() {
+		return BotManagementAIAgentsModel{}
+	}
+	if out, diags := v.Value(context.TODO()); !diags.HasError() && out != nil {
+		return *out
+	}
+	return BotManagementAIAgentsModel{}
 }
 
 // Helper functions to reduce repetition

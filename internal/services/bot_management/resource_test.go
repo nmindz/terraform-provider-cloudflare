@@ -930,3 +930,46 @@ func TestAccUpgradeBotManagement_FromPublishedV5(t *testing.T) {
 		},
 	})
 }
+
+func TestAccCloudflareBotManagement_AIBotsProtectionBlock(t *testing.T) {
+	rnd := utils.GenerateRandomResourceName()
+	resourceName := "cloudflare_bot_management." + rnd
+	zoneID := os.Getenv("CLOUDFLARE_ZONE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				// Only ai_bots_protection is configured; unconfigured fields must not be sent.
+				Config: testCloudflareBotManagementAIBotsProtection(rnd, zoneID, "block"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(resourceName, tfjsonpath.New("ai_bots_protection"), knownvalue.StringExact("block")),
+				},
+			},
+			{
+				Config: testCloudflareBotManagementAIBotsProtection(rnd, zoneID, "block"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			{
+				Config: testCloudflareBotManagementAIBotsProtectionAITraining(rnd, zoneID, "block", "allow"),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue(resourceName, tfjsonpath.New("ai_bots_protection"), knownvalue.StringExact("block")),
+					statecheck.ExpectKnownValue(resourceName, tfjsonpath.New("ai_training"), knownvalue.StringExact("allow")),
+				},
+			},
+			{
+				Config: testCloudflareBotManagementAIBotsProtectionAITraining(rnd, zoneID, "block", "allow"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+func testCloudflareBotManagementAIBotsProtectionAITraining(resourceName, zoneID, aiBotsProtection, aiTraining string) string {
+	return acctest.LoadTestCase("cloudflarebotmanagementaibotsprotectionaitraining.tf", resourceName, zoneID, aiBotsProtection, aiTraining)
+}

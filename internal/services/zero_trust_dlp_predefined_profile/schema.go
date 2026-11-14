@@ -11,10 +11,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -62,9 +62,9 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Default: int64default.StaticInt64(0),
 			},
 			"confidence_threshold": schema.StringAttribute{
-				Computed: true,
-				Optional: true,
-				Default:  stringdefault.StaticString("low"),
+				Computed:      true,
+				Optional:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"ocr_enabled": schema.BoolAttribute{
 				Computed: true,
@@ -89,12 +89,14 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				PlanModifiers: []planmodifier.List{listplanmodifier.UseNonNullStateForUnknown()},
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the predefined profile.",
-				Computed:    true,
+				Description:   "The name of the predefined profile.",
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"open_access": schema.BoolAttribute{
-				Description: "Whether this profile can be accessed by anyone.",
-				Computed:    true,
+				Description:   "Whether this profile can be accessed by anyone.",
+				Computed:      true,
+				PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()},
 			},
 		},
 	}

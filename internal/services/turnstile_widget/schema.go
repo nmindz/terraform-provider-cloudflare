@@ -7,12 +7,10 @@ import (
 
 	"github.com/cloudflare/terraform-provider-cloudflare/internal/schemata"
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
-	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -32,7 +30,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				"Turnstile Sites Write",
 			},
 		}.String(),
-		Version: 500,
+		Version: 501,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description:   "Widget item identifier tag.",
@@ -72,24 +70,6 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 						"modified_on",
 					),
 				},
-			},
-			"page": schema.Float64Attribute{
-				Description: "Page number of paginated results.",
-				Computed:    true,
-				Optional:    true,
-				Validators: []validator.Float64{
-					float64validator.AtLeast(1),
-				},
-				Default: float64default.StaticFloat64(1),
-			},
-			"per_page": schema.Float64Attribute{
-				Description: "Number of items per page.",
-				Computed:    true,
-				Optional:    true,
-				Validators: []validator.Float64{
-					float64validator.Between(5, 1000),
-				},
-				Default: float64default.StaticFloat64(25),
 			},
 			"mode": schema.StringAttribute{
 				Description: "Widget Mode\nAvailable values: \"non-interactive\", \"invisible\", \"managed\".",
@@ -155,8 +135,9 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				PlanModifiers: []planmodifier.String{stringplanmodifier.UseNonNullStateForUnknown()},
 			},
 			"deployed_via": schema.StringAttribute{
-				Description: "Origin that created this widget, recorded at creation time and\nimmutable afterward. Server-derived from the create request; not\nclient-settable. Omitted from the response for widgets created\nbefore this field existed.\nAvailable values: \"wrangler\", \"dashboard\", \"spin\", \"api\", \"unknown\".",
-				Computed:    true,
+				Description:   "Origin that created this widget, recorded at creation time and\nimmutable afterward. Server-derived from the create request; not\nclient-settable. Omitted from the response for widgets created\nbefore this field existed.\nAvailable values: \"wrangler\", \"dashboard\", \"spin\", \"api\", \"unknown\".",
+				Computed:      true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Validators: []validator.String{
 					stringvalidator.OneOfCaseInsensitive(
 						"wrangler",
@@ -186,9 +167,10 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				CustomType:  timetypes.RFC3339Type{},
 			},
 			"secret": schema.StringAttribute{
-				Description: "Secret key for this widget.",
-				Computed:    true,
-				Sensitive:   true,
+				Description:   "Secret key for this widget.",
+				Computed:      true,
+				Sensitive:     true,
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 		},
 	}

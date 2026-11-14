@@ -107,3 +107,23 @@ func TestTransform_NoEntries(t *testing.T) {
 		t.Fatalf("EnabledEntries should be nil when no entry blocks exist, got %v", *result.EnabledEntries)
 	}
 }
+
+// v4 has no confidence_threshold; the upgrade must not inject one.
+func TestTransform_ConfidenceThresholdNull(t *testing.T) {
+	source := v500.SourceCloudflareDLPProfileModel{
+		ID:                types.StringValue("profile-uuid"),
+		AccountID:         types.StringValue("account-uuid"),
+		Name:              types.StringValue("Credentials and Secrets"),
+		Type:              types.StringValue("predefined"),
+		AllowedMatchCount: types.Int64Value(0),
+		OCREnabled:        types.BoolValue(false),
+	}
+
+	result, diags := v500.Transform(context.Background(), source)
+	if diags.HasError() {
+		t.Fatalf("Transform returned unexpected errors: %v", diags)
+	}
+	if !result.ConfidenceThreshold.IsNull() {
+		t.Errorf("ConfidenceThreshold = %v, want null", result.ConfidenceThreshold)
+	}
+}

@@ -40,9 +40,10 @@ func Transform(ctx context.Context, source SourceCloudflareDLPProfileModel) (*Ta
 	target.AllowedMatchCount = source.AllowedMatchCount
 	target.OCREnabled = source.OCREnabled
 
-	// New optional fields — set to defaults
+	// New optional field
 	target.AIContextEnabled = types.BoolValue(false)
-	target.ConfidenceThreshold = types.StringValue("low")
+	// v4 had no confidence_threshold; leave null rather than inject a default.
+	target.ConfidenceThreshold = types.StringNull()
 
 	// Computed fields — set to null, will refresh from API
 	target.OpenAccess = types.BoolNull()

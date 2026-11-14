@@ -20,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -353,7 +352,6 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 						Description: "Indicates how a SCIM event updates a user identity used for policy evaluation. Use \"automatic\" to automatically update a user's identity and augment it with fields from the SCIM user resource. Use \"reauth\" to force re-authentication on group membership updates, user identity update will only occur after successful re-authentication. With \"reauth\" identities will not contain fields from the SCIM user resource. With \"no_action\" identities will not be changed by SCIM updates in any way and users will not be prompted to reauthenticate.\nAvailable values: \"automatic\", \"reauth\", \"no_action\".",
 						Computed:    true,
 						Optional:    true,
-						Default:     stringdefault.StaticString("no_action"),
 						Validators: []validator.String{
 							stringvalidator.OneOfCaseInsensitive(
 								"automatic",
@@ -365,9 +363,6 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 					"scim_base_url": schema.StringAttribute{
 						Description: "The base URL of Cloudflare's SCIM V2.0 API endpoint.",
 						Computed:    true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseNonNullStateForUnknown(),
-						},
 					},
 					"seat_deprovision": schema.BoolAttribute{
 						Description: "A flag to remove a user's seat in Zero Trust when they have been deprovisioned in the Identity Provider.  This cannot be enabled unless user_deprovision is also enabled.",

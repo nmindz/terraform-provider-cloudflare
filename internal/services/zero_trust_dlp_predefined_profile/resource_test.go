@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestMain(m *testing.M) {
@@ -150,4 +151,53 @@ func TestAccUpgradeZeroTrustDlpPredefinedProfile_FromPublishedV5(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccCloudflareZeroTrustDlpPredefinedProfile_NoInjectedDefaults(t *testing.T) {
+	rnd := utils.GenerateRandomResourceName()
+	resourceName := "cloudflare_zero_trust_dlp_predefined_profile." + rnd
+	accountID := os.Getenv("CLOUDFLARE_ACCOUNT_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccZeroTrustDlpPredefinedProfileConfigStock(rnd, accountID),
+			},
+			{
+				// confidence_threshold is unconfigured: no injected "low", and
+				// name/open_access stay known.
+				Config: testAccZeroTrustDlpPredefinedProfileConfigStock(rnd, accountID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			{
+				ResourceName:      resourceName,
+				ImportStateIdFunc: func(*terraform.State) (string, error) { return accountID + "/" + dlpStockProfileID, nil },
+				ImportState:       true,
+			},
+			{
+				Config: testAccZeroTrustDlpPredefinedProfileConfigThreshold(rnd, accountID, "high"),
+				Check:  resource.TestCheckResourceAttr(resourceName, "confidence_threshold", "high"),
+			},
+			{
+				Config: testAccZeroTrustDlpPredefinedProfileConfigThreshold(rnd, accountID, "high"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+const dlpStockProfileID = "e91a2360-da51-4fdf-9711-bcdecd462614"
+
+func testAccZeroTrustDlpPredefinedProfileConfigStock(rnd, accountID string) string {
+	return acctest.LoadTestCase("stock.tf", rnd, accountID, dlpStockProfileID)
+}
+
+func testAccZeroTrustDlpPredefinedProfileConfigThreshold(rnd, accountID, threshold string) string {
+	return acctest.LoadTestCase("confidence_threshold.tf", rnd, accountID, dlpStockProfileID, threshold)
 }

@@ -68,6 +68,4 @@ type TargetTurnstileWidgetModel struct {
 	Direction       types.String      `tfsdk:"direction"`
 	Filter          types.String      `tfsdk:"filter"`
 	Order           types.String      `tfsdk:"order"`
-	Page            types.Float64     `tfsdk:"page"`
-	PerPage         types.Float64     `tfsdk:"per_page"`
 }

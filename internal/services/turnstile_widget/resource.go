@@ -79,14 +79,6 @@ func (r *TurnstileWidgetResource) Create(ctx context.Context, req resource.Creat
 		params.Order = cloudflare.F(turnstile.WidgetNewParamsOrder(data.Order.ValueString()))
 	}
 
-	if !data.Page.IsNull() && !data.Page.IsUnknown() {
-		params.Page = cloudflare.F(data.Page.ValueFloat64())
-	}
-
-	if !data.PerPage.IsNull() && !data.PerPage.IsUnknown() {
-		params.PerPage = cloudflare.F(data.PerPage.ValueFloat64())
-	}
-
 	dataBytes, err := data.MarshalJSON()
 	if err != nil {
 		resp.Diagnostics.AddError("failed to serialize http request", err.Error())
@@ -276,12 +268,6 @@ func (r *TurnstileWidgetResource) ImportState(ctx context.Context, req resource.
 	}
 	data = &env.Result
 	data.ID = data.Sitekey
-	if data.Page.IsNull() {
-		data.Page = types.Float64Value(1)
-	}
-	if data.PerPage.IsNull() {
-		data.PerPage = types.Float64Value(25)
-	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

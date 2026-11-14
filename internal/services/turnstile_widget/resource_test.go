@@ -296,3 +296,48 @@ func testAccCheckCloudflareTurnstileWidgetUpdated(rnd, accountID string) string 
 func testAccCheckCloudflareTurnstileWidgetNonInteractive(rnd, accountID string) string {
 	return acctest.LoadTestCase("turnstilewidgetnoninteractive.tf", rnd, accountID)
 }
+
+func TestAccCloudflareTurnstileWidget_NoPlanDrift(t *testing.T) {
+	rnd := utils.GenerateRandomResourceName()
+	accountID := os.Getenv("CLOUDFLARE_ACCOUNT_ID")
+	resourceName := "cloudflare_turnstile_widget." + rnd
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckCloudflareTurnstileWidgetMinimum(rnd, accountID),
+			},
+			{
+				// Unchanged config after create: no page/per_page drift.
+				Config: testAccCheckCloudflareTurnstileWidgetMinimum(rnd, accountID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			{
+				ResourceName:        resourceName,
+				ImportStateIdPrefix: fmt.Sprintf("%s/", accountID),
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
+			{
+				// Renaming must apply without an inconsistent-result error on
+				// server-restamped fields (modified_on, last_modified_via).
+				Config: testAccCheckCloudflareTurnstileWidgetMinimumRenamed(rnd, accountID),
+				Check:  resource.TestCheckResourceAttr(resourceName, "name", rnd+"-renamed"),
+			},
+			{
+				Config: testAccCheckCloudflareTurnstileWidgetMinimumRenamed(rnd, accountID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+func testAccCheckCloudflareTurnstileWidgetMinimumRenamed(rnd, accountID string) string {
+	return acctest.LoadTestCase("turnstilewidgetminimumrenamed.tf", rnd, accountID)
+}

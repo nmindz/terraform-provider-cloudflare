@@ -1,0 +1,23 @@
+{
+  "id": "0x4AAAAAAA",
+  "sitekey": "0x4AAAAAAA",
+  "account_id": "f037e56e89293a057740de681ac9abbe",
+  "direction": null,
+  "filter": null,
+  "order": null,
+  "page": 1,
+  "per_page": 25,
+  "mode": "managed",
+  "name": "example",
+  "domains": ["example.com"],
+  "bot_fight_mode": false,
+  "clearance_level": "no_clearance",
+  "ephemeral_id": false,
+  "offlabel": false,
+  "region": "world",
+  "created_on": "2025-01-01T00:00:00Z",
+  "deployed_via": "api",
+  "last_modified_via": "api",
+  "modified_on": "2025-01-01T00:00:00Z",
+  "secret": "0x4AAAAAAAsecret"
+}

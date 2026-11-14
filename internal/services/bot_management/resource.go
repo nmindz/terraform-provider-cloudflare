@@ -63,9 +63,14 @@ func (r *BotManagementResource) Create(ctx context.Context, req resource.CreateR
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	var config *BotManagementModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	// Convert Terraform model to API model
-	apiModel := data.ToAPIModel()
+	// Create sends configured fields only.
+	apiModel := data.ToAPIModel(config, nil)
 	dataBytes, err := json.Marshal(apiModel)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to serialize http request", err.Error())
@@ -119,8 +124,14 @@ func (r *BotManagementResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	// Convert Terraform model to API model
-	apiModel := data.ToAPIModel()
+	var config *BotManagementModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Send configured fields and fields changed from state only.
+	apiModel := data.ToAPIModel(config, state)
 	dataBytes, err := json.Marshal(apiModel)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to serialize http request", err.Error())

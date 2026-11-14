@@ -9,32 +9,52 @@ import (
 )
 
 func modifyPlan(ctx context.Context, req resource.ModifyPlanRequest, res *resource.ModifyPlanResponse) {
-	var planApp, stateApp *ZeroTrustAccessIdentityProviderModel
+	var planApp, stateApp, configApp *ZeroTrustAccessIdentityProviderModel
 	res.Diagnostics.Append(req.Plan.Get(ctx, &planApp)...)
 	res.Diagnostics.Append(req.State.Get(ctx, &stateApp)...)
+	res.Diagnostics.Append(req.Config.Get(ctx, &configApp)...)
 	if res.Diagnostics.HasError() || planApp == nil {
 		return
 	}
 
-	// Handle scim_config.secret based on different scenarios
-	if stateApp != nil && !stateApp.SCIMConfig.IsNull() && !planApp.SCIMConfig.IsNull() {
+	if stateApp != nil && knownObject(stateApp.SCIMConfig) && knownObject(planApp.SCIMConfig) {
 		stateModel, _ := stateApp.SCIMConfig.Value(ctx)
 		planModel, _ := planApp.SCIMConfig.Value(ctx)
-
-		// Check if enabled is changing from false/null to true - regenerate secret
-		enabledChangingToTrue := (stateModel.Enabled.IsNull() || !stateModel.Enabled.ValueBool()) &&
-			planModel.Enabled.ValueBool()
-
-		if enabledChangingToTrue {
-			// Set secret to unknown when enabling SCIM, so it gets computed by the API
-			planModel.Secret = types.StringUnknown()
-		} else {
-			// Preserve existing secret value to prevent unnecessary diffs
-			planModel.Secret = stateModel.Secret
+		var configModel *ZeroTrustAccessIdentityProviderSCIMConfigModel
+		if configApp != nil && knownObject(configApp.SCIMConfig) {
+			configModel, _ = configApp.SCIMConfig.Value(ctx)
 		}
 
-		planApp.SCIMConfig, _ = customfield.NewObject(ctx, planModel)
+		if stateModel != nil && planModel != nil {
+			reconcileSCIMConfigPlan(planModel, configModel, stateModel)
+			planApp.SCIMConfig, _ = customfield.NewObject(ctx, planModel)
+		}
 	}
 
 	res.Plan.Set(ctx, &planApp)
+}
+
+func knownObject(v customfield.NestedObject[ZeroTrustAccessIdentityProviderSCIMConfigModel]) bool {
+	return !v.IsNull() && !v.IsUnknown()
+}
+
+// reconcileSCIMConfigPlan carries server-computed scim_config values over from
+// state so an unchanged provider plans no diff. config may be nil.
+func reconcileSCIMConfigPlan(plan, config, state *ZeroTrustAccessIdentityProviderSCIMConfigModel) {
+	// Enabling SCIM makes the API issue a new secret and base URL.
+	enabling := (state.Enabled.IsNull() || !state.Enabled.ValueBool()) && plan.Enabled.ValueBool()
+
+	if enabling {
+		plan.Secret = types.StringUnknown()
+		plan.SCIMBaseURL = types.StringUnknown()
+	} else {
+		plan.Secret = state.Secret
+		// Null-preserving: the API omits it while SCIM is disabled.
+		plan.SCIMBaseURL = state.SCIMBaseURL
+	}
+
+	// Unconfigured: keep whatever the API last returned (may be null).
+	if config == nil || config.IdentityUpdateBehavior.IsNull() {
+		plan.IdentityUpdateBehavior = state.IdentityUpdateBehavior
+	}
 }
